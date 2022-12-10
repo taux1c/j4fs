@@ -1,11 +1,11 @@
 import mechanicalsoup
 import pandas as pd
 import getpass
+import login
 
 urls = {
     "login":"https://justfor.fans/login.php",
     "home_url":"https://justfor.fans/home",
-    "more_posts":"https://justfor.fans/ajax/getPosts.php?Type=One&amp;UserID=976119&amp;PosterID=733641&amp;StartAt=0&amp;Page=Profile&amp;UserHash4=6e991b2859a7d38c98aab9769824448a&amp;SplitTest=0"
 
 }
 
@@ -35,8 +35,10 @@ class Browser:
 
     def login(self):
         try:
-            _u = input("Email: ")
-            _p = input("Password: ")
+            # _u = input("Email: ")
+            # _p = input("Password: ")
+            _u = login._u
+            _p = login._p
             self.browser.select_form()
             self.browser["Email"] = _u
             self.browser["Password"] = _p
