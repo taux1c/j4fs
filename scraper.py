@@ -18,6 +18,8 @@ class Browser:
     def __init__(self,name):
         self.media = {}
         self.name = name
+        self.poster_id=""
+        self.hash4=""
         if not self.load_session():
             self.browser = mechanicalsoup.StatefulBrowser(user_agent=user_agent)
             self.browser.open(urls["login"])
@@ -31,7 +33,7 @@ class Browser:
     def print(self):
         print(self.url)
         print(self.media)
-
+        print(self.poster_id)
 
     def login(self):
         try:
@@ -106,7 +108,16 @@ class Browser:
             sub_name = sub["name"]
             sub_data = {"name": sub_name, "photos": sub_photos, "videos": sub_videos, "audios": sub_audios}
             self.media.update({sub_name:sub_data})
-
+    def get_poster_id(self):
+        links = self.page.find_all("a")
+        for link in links:
+            if not link["href"].startswith("/ajax"):
+                links.remove(link)
+        x = links[0]["href"]
+        for i in x.split('&'):
+            if i.startswith("UserHash4"):
+                self.hash4 = i.split("=")[1]
+        print(self.hash4)
 
 
 
@@ -118,6 +129,7 @@ def process():
     j4f.go(urls["home_url"])
     j4f.get_subs()
     j4f.parse_subs()
+    j4f.get_poster_id()
     j4f.print()
 
 
