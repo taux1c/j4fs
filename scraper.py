@@ -167,7 +167,9 @@ class Browser:
                     file_path = pathlib.Path(sub_directory / file_name)
                     if not file_path.exists():
                         print("Downloading {}".format(file_name))
-
+                        self.browser.open(media)
+                        with open(file_path, 'wb') as f:
+                            f.write(self.browser.get_current_page())
 
                     else:
                         print("Skipping {}".format(file_name))
