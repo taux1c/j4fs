@@ -6,7 +6,8 @@ import login
 urls = {
     "login":"https://justfor.fans/login.php",
     "home_url":"https://justfor.fans/home",
-
+    "get_more_posts":"https://justfor.fans/ajax/getPosts.php?Type=One&UserID={}&PosterID={}&StartAt={}&Page=Profile&UserHash4={}&SplitTest=0"
+# GET MORE POSTS ORDER USERID POSTERID STARTAT USERHASH4
 }
 
 # User agent of your choice
@@ -20,6 +21,7 @@ class Browser:
         self.name = name
         self.poster_id=""
         self.hash4=""
+        self.start_at = 0
         if not self.load_session():
             self.browser = mechanicalsoup.StatefulBrowser(user_agent=user_agent)
             self.browser.open(urls["login"])
@@ -33,7 +35,8 @@ class Browser:
     def print(self):
         print(self.url)
         print(self.media)
-        print(self.poster_id)
+
+
 
     def login(self):
         try:
@@ -97,27 +100,41 @@ class Browser:
     def parse_subs(self):
         for sub in self.performers_data:
             self.go(sub["profile_url"])
-            sub_photo_data = self.page.find_all("div" , {"id":"postAreaAutoScroll"})
-            print(sub_photo_data)
-
-            ub_video_data = self.page.find_all("div", {"class": "video"})
-            sub_audio_data = self.page.find_all("div", {"class": "audio"})
-            sub_photos = []
-            sub_videos = []
-            sub_audios = []
+            sub_post_data = self.page.find_all("div" , {"id":"postAreaAutoScroll"})
+            sub_post_data = [x.find("a")["href"] for x in sub_post_data]
+            if len(sub_post_data) == 1:
+                sub_post_data = sub_post_data[0]
+            else:
+                sub_post_data = sub_post_data[1]
+            sub_photo_data_split = sub_post_data.split("&")
+            for x in sub_photo_data_split:
+                if "PosterID" in x:
+                    self.poster_id = x.split("=")[1]
+                if "Hash4" in x:
+                    self.hash4 = x.split("=")[1]
+                if "UserID" in x:
+                    self.user_id = x.split("=")[1]
+            self.get_more_posts_url = urls["get_more_posts"].format(self.user_id,self.poster_id,self.start_at,self.hash4)
             sub_name = sub["name"]
-            sub_data = {"name": sub_name, "photos": sub_photos, "videos": sub_videos, "audios": sub_audios}
+            sub_data = {"name": [], "photos": [], "videos": [], "audios": []}
             self.media.update({sub_name:sub_data})
-    def get_poster_id(self):
-        links = self.page.find_all("a")
-        for link in links:
-            if not link["href"].startswith("/ajax"):
-                links.remove(link)
-        x = links[0]["href"]
-        for i in x.split('&'):
-            if i.startswith("UserHash4"):
-                self.hash4 = i.split("=")[1]
-        print(self.hash4)
+    def get_posts(self):
+        self.go(self.get_more_posts_url)
+        self.page = self.browser.get_current_page()
+        self.session = self.browser.session
+        self.cookies = self.session.cookies.get_dict()
+        self.headers = self.session.headers
+        self.url = self.browser.get_url()
+        self.start_at += 10
+        self.get_more_posts_url = urls["get_more_posts"].format(self.user_id,self.poster_id,self.start_at,self.hash4)
+    def find_media(self):
+        pass
+    def find_posts(self):
+        pass
+    def download_media(self):
+        pass
+
+
 
 
 
@@ -129,7 +146,7 @@ def process():
     j4f.go(urls["home_url"])
     j4f.get_subs()
     j4f.parse_subs()
-    j4f.get_poster_id()
+    j4f.get_posts()
     j4f.print()
 
 
