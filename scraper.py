@@ -123,7 +123,7 @@ class Browser:
             self.get_more_posts_url = urls["get_more_posts"].format(self.user_id,self.poster_id,self.start_at,self.hash4)
             sub_name = sub["name"]
             self.sub_name = sub_name
-            sub_data = {"name": [], "photos": [], "videos": [], "audios": []}
+            sub_data = {"photos": [], "videos": [], "audios": []}
             self.media.update({sub_name:sub_data})
     def get_posts(self):
         self.go(self.get_more_posts_url)
@@ -153,6 +153,7 @@ class Browser:
                     sorted_images.append(image["data-lazy"])
 
         self.media[self.sub_name]['photos'].extend(sorted_images)
+
     def find_posts(self):
         pass
     def download_media(self):
@@ -167,9 +168,9 @@ class Browser:
                     file_path = pathlib.Path(sub_directory / file_name)
                     if not file_path.exists():
                         print("Downloading {}".format(file_name))
-                        self.browser.open(media)
+                        r = self.browser.open(media)
                         with open(file_path, 'wb') as f:
-                            f.write(self.browser.get_current_page())
+                            f.write(r.content)
 
                     else:
                         print("Skipping {}".format(file_name))
@@ -193,7 +194,6 @@ def process():
     j4f.parse_subs()
     j4f.get_posts()
     j4f.find_media()
-    j4f.print()
     j4f.download_media()
 
 
