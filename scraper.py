@@ -2,6 +2,21 @@ import mechanicalsoup
 import pandas as pd
 import getpass
 import login
+import pathlib
+import httpx
+# DO NOT EDIT ABOVE THIS LINE
+
+
+
+# User agent of your choice
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
+# File to save session to.
+session_file = "session.j4f"
+# Directory to create just for fans tree.
+save_dir = "./just4fans"
+
+# DO NOT EDIT BELOW THIS LINE
+save_location = pathlib.Path(save_dir)
 
 urls = {
     "login":"https://justfor.fans/login.php",
@@ -9,11 +24,6 @@ urls = {
     "get_more_posts":"https://justfor.fans/ajax/getPosts.php?Type=One&UserID={}&PosterID={}&StartAt={}&Page=Profile&UserHash4={}&SplitTest=0"
 # GET MORE POSTS ORDER USERID POSTERID STARTAT USERHASH4
 }
-
-# User agent of your choice
-user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
-session_file = "session.j4f"
-
 # Create a browser object
 class Browser:
     def __init__(self,name):
@@ -22,6 +32,7 @@ class Browser:
         self.poster_id=""
         self.hash4=""
         self.start_at = 0
+        self.sub_name = ""
         if not self.load_session():
             self.browser = mechanicalsoup.StatefulBrowser(user_agent=user_agent)
             self.browser.open(urls["login"])
@@ -31,11 +42,6 @@ class Browser:
             self.cookies = self.session.cookies.get_dict()
             self.headers = self.session.headers
             self.user_agent = user_agent
-
-    def print(self):
-        print(self.url)
-        print(self.media)
-
 
 
     def login(self):
@@ -116,6 +122,7 @@ class Browser:
                     self.user_id = x.split("=")[1]
             self.get_more_posts_url = urls["get_more_posts"].format(self.user_id,self.poster_id,self.start_at,self.hash4)
             sub_name = sub["name"]
+            self.sub_name = sub_name
             sub_data = {"name": [], "photos": [], "videos": [], "audios": []}
             self.media.update({sub_name:sub_data})
     def get_posts(self):
@@ -128,11 +135,47 @@ class Browser:
         self.start_at += 10
         self.get_more_posts_url = urls["get_more_posts"].format(self.user_id,self.poster_id,self.start_at,self.hash4)
     def find_media(self):
-        pass
+        # This function will need work to support filtering out old posts.
+        images = self.page.find_all("img")
+        sorted_images = []
+        for image in images:
+            if "src" in image.attrs:
+                if "https://media.justfor.fans" in image["src"] and self.poster_id in image["src"]:
+                    sorted_images.append(image["src"])
+            elif "data-src" in image.attrs:
+                if "https://media.justfor.fans" in image["data-src"] and self.poster_id in image["data-src"]:
+                    sorted_images.append(image["data-src"])
+            elif "data-original" in image.attrs:
+                if "https://media.justfor.fans" in image["data-original"] and self.poster_id in image["data-original"]:
+                    sorted_images.append(image["data-original"])
+            elif "data-lazy" in image.attrs:
+                if "https://media.justfor.fans" in image["data-lazy"] and self.poster_id in image["data-lazy"]:
+                    sorted_images.append(image["data-lazy"])
+
+        self.media[self.sub_name]['photos'].extend(sorted_images)
     def find_posts(self):
         pass
     def download_media(self):
-        pass
+        for sub in self.media:
+            top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
+            top_directory.mkdir(parents=True, exist_ok=True)
+            for media_type in self.media[sub]:
+                sub_directory = pathlib.Path(top_directory / media_type)
+                sub_directory.mkdir(parents=True, exist_ok=True)
+                for media in self.media[sub][media_type]:
+                    file_name = media.split("/")[-1]
+                    file_path = pathlib.Path(sub_directory / file_name)
+                    if not file_path.exists():
+                        print("Downloading {}".format(file_name))
+
+
+                    else:
+                        print("Skipping {}".format(file_name))
+    def print(self):
+        print(self.url)
+        print(self.media)
+
+
 
 
 
@@ -147,7 +190,9 @@ def process():
     j4f.get_subs()
     j4f.parse_subs()
     j4f.get_posts()
+    j4f.find_media()
     j4f.print()
+    j4f.download_media()
 
 
 if __name__ == "__main__":
