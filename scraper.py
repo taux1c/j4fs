@@ -190,7 +190,6 @@ class Browser:
                         print("Skipping {}".format(file_name))
     def get_videos(self):
         vids = []
-        return vids
         vblocks = self.page.find_all("div", {"class": "videoBlock"})
         for block in vblocks:
             link = block.find("a")
