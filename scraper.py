@@ -221,7 +221,6 @@ def process():
     j4f.get_posts()
     j4f.find_media()
     j4f.get_videos()
-    j4f.print()
     j4f.download_media()
 
 x = pathlib.Path('login.txt')
