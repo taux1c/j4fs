@@ -3,6 +3,7 @@ import pandas as pd
 import getpass
 import login
 import pathlib
+import datetime
 import httpx
 # DO NOT EDIT ABOVE THIS LINE
 
@@ -158,8 +159,9 @@ class Browser:
         self.media[self.sub_name]['videos'].extend(videos)
 
     def check_for_more_images(self):
+
+        self.image_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
         self.image_count_old = self.image_count
-        self.image_count = len(self.media[self.sub_name]['photos'])
         self.get_posts()
 
         while self.image_count_old != self.image_count:
@@ -173,7 +175,10 @@ class Browser:
                 sub_directory = pathlib.Path(top_directory / media_type)
                 sub_directory.mkdir(parents=True, exist_ok=True)
                 for media in self.media[sub][media_type]:
-                    file_name = media.split("/")[-1]
+                    if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
+                        file_name = media.split("/")[-1]
+                    else:
+                        file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".mp4"
                     file_path = pathlib.Path(sub_directory / file_name)
                     if not file_path.exists():
                         print("Downloading {}".format(file_name))
@@ -185,6 +190,7 @@ class Browser:
                         print("Skipping {}".format(file_name))
     def get_videos(self):
         vids = []
+        return vids
         vblocks = self.page.find_all("div", {"class": "videoBlock"})
         for block in vblocks:
             link = block.find("a")
