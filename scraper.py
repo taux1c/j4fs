@@ -6,7 +6,7 @@ import pathlib
 import httpx
 # DO NOT EDIT ABOVE THIS LINE
 
-
+logins_file = pathlib.Path("logins.json")
 
 # User agent of your choice
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
@@ -33,6 +33,7 @@ class Browser:
         self.hash4=""
         self.start_at = 0
         self.sub_name = ""
+        self.image_count=0
         if not self.load_session():
             self.browser = mechanicalsoup.StatefulBrowser(user_agent=user_agent)
             self.browser.open(urls["login"])
@@ -153,9 +154,17 @@ class Browser:
                     sorted_images.append(image["data-lazy"])
 
         self.media[self.sub_name]['photos'].extend(sorted_images)
+        videos = self.get_videos()
+        self.media[self.sub_name]['videos'].extend(videos)
 
-    def find_posts(self):
-        pass
+    def check_for_more_images(self):
+        self.image_count_old = self.image_count
+        self.image_count = len(self.media[self.sub_name]['photos'])
+        self.get_posts()
+
+        while self.image_count_old != self.image_count:
+            self.find_media()
+            self.check_for_more_images()
     def download_media(self):
         for sub in self.media:
             top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
@@ -174,6 +183,18 @@ class Browser:
 
                     else:
                         print("Skipping {}".format(file_name))
+    def get_videos(self):
+        vids = []
+        vblocks = self.page.find_all("div", {"class": "videoBlock"})
+        for block in vblocks:
+            link = block.find("a")
+            js0= link['onclick']
+            jsl = js0.split("1080p\":\"")[1].split("\"}")[0]
+            if jsl:
+                jsl0 = jsl.replace("\\/", "/")
+                vids.append(jsl0)
+        return vids
+
     def print(self):
         print(self.url)
         print(self.media)
@@ -194,7 +215,14 @@ def process():
     j4f.parse_subs()
     j4f.get_posts()
     j4f.find_media()
+    j4f.get_videos()
+    j4f.print()
     j4f.download_media()
+
+x = pathlib.Path('login.txt')
+if not x.exists():
+    x.touch()
+
 
 
 if __name__ == "__main__":
