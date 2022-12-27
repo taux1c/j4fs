@@ -18,7 +18,7 @@ save_dir = "./just4fans"
 
 # DO NOT EDIT BELOW THIS LINE
 save_location = pathlib.Path(save_dir)
-
+more = True
 urls = {
     "login":"https://justfor.fans/login.php",
     "home_url":"https://justfor.fans/home",
@@ -137,6 +137,7 @@ class Browser:
         self.start_at += 10
         self.get_more_posts_url = urls["get_more_posts"].format(self.user_id,self.poster_id,self.start_at,self.hash4)
     def find_media(self):
+        global more
         # This function will need work to support filtering out old posts.
         images = self.page.find_all("img")
         sorted_images = []
@@ -157,16 +158,48 @@ class Browser:
         self.media[self.sub_name]['photos'].extend(sorted_images)
         videos = self.get_videos()
         self.media[self.sub_name]['videos'].extend(videos)
+        self.check_for_more_images()
 
+    def find_media2(self):
+        global more
+        # This function will need work to support filtering out old posts.
+        images = self.page.find_all("img")
+        sorted_images = []
+        for image in images:
+            if "src" in image.attrs:
+                if "https://media.justfor.fans" in image["src"] and self.poster_id in image["src"]:
+                    sorted_images.append(image["src"])
+            elif "data-src" in image.attrs:
+                if "https://media.justfor.fans" in image["data-src"] and self.poster_id in image["data-src"]:
+                    sorted_images.append(image["data-src"])
+            elif "data-original" in image.attrs:
+                if "https://media.justfor.fans" in image["data-original"] and self.poster_id in image["data-original"]:
+                    sorted_images.append(image["data-original"])
+            elif "data-lazy" in image.attrs:
+                if "https://media.justfor.fans" in image["data-lazy"] and self.poster_id in image["data-lazy"]:
+                    sorted_images.append(image["data-lazy"])
+
+        self.media[self.sub_name]['photos'].extend(sorted_images)
+        videos = self.get_videos()
+        self.media[self.sub_name]['videos'].extend(videos)
     def check_for_more_images(self):
-
-        self.image_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
-        self.image_count_old = self.image_count
-        self.get_posts()
-
-        while self.image_count_old != self.image_count:
-            self.find_media()
-            self.check_for_more_images()
+        global more
+        self.media_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
+        self.old_media_count = self.media_count
+        while more:
+            self.get_posts()
+            self.find_media2()
+            if self.old_media_count == self.media_count:
+                more = False
+            else:
+                self.old_media_count = self.media_count
+        # self.image_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
+        # self.image_count_old = self.image_count
+        # self.get_posts()
+        #
+        # while self.image_count_old != self.image_count:
+        #     self.find_media()
+        #     self.check_for_more_images()
     def download_media(self):
         for sub in self.media:
             top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
@@ -202,7 +235,12 @@ class Browser:
 
     def print(self):
         print(self.url)
-        print(self.media)
+        for sub in self.media:
+            print(sub)
+            for media_type in self.media[sub]:
+                print("  {}".format(media_type))
+                for media in self.media[sub][media_type]:
+                    print("    {}".format(media))
 
 
 
