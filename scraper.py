@@ -50,8 +50,8 @@ class Browser:
         try:
             # _u = input("Email: ")
             # _p = input("Password: ")
-            _u = login._u
-            _p = login._p
+            _u = login._u # This is just for testing purposes to avoid putting username in every time.
+            _p = login._p # This is just for testing purposes to avoid putting password in every time.
             self.browser.select_form()
             self.browser["Email"] = _u
             self.browser["Password"] = _p
