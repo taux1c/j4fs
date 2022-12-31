@@ -7,7 +7,7 @@ import datetime
 import httpx
 # DO NOT EDIT ABOVE THIS LINE
 
-logins_file = pathlib.Path("logins.json")
+
 
 # User agent of your choice
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
@@ -35,6 +35,7 @@ class Browser:
         self.start_at = 0
         self.sub_name = ""
         self.image_count=0
+        self.old_media_count = 0
         if not self.load_session():
             self.browser = mechanicalsoup.StatefulBrowser(user_agent=user_agent)
             self.browser.open(urls["login"])
@@ -48,10 +49,9 @@ class Browser:
 
     def login(self):
         try:
-            # _u = input("Email: ")
-            # _p = input("Password: ")
-            _u = login._u # This is just for testing purposes to avoid putting username in every time.
-            _p = login._p # This is just for testing purposes to avoid putting password in every time.
+            _u = input("Email: ")
+            _p = input("Password: ")
+
             self.browser.select_form()
             self.browser["Email"] = _u
             self.browser["Password"] = _p
@@ -160,46 +160,23 @@ class Browser:
         self.media[self.sub_name]['videos'].extend(videos)
         self.check_for_more_images()
 
-    def find_media2(self):
-        global more
-        # This function will need work to support filtering out old posts.
-        images = self.page.find_all("img")
-        sorted_images = []
-        for image in images:
-            if "src" in image.attrs:
-                if "https://media.justfor.fans" in image["src"] and self.poster_id in image["src"]:
-                    sorted_images.append(image["src"])
-            elif "data-src" in image.attrs:
-                if "https://media.justfor.fans" in image["data-src"] and self.poster_id in image["data-src"]:
-                    sorted_images.append(image["data-src"])
-            elif "data-original" in image.attrs:
-                if "https://media.justfor.fans" in image["data-original"] and self.poster_id in image["data-original"]:
-                    sorted_images.append(image["data-original"])
-            elif "data-lazy" in image.attrs:
-                if "https://media.justfor.fans" in image["data-lazy"] and self.poster_id in image["data-lazy"]:
-                    sorted_images.append(image["data-lazy"])
 
-        self.media[self.sub_name]['photos'].extend(sorted_images)
-        videos = self.get_videos()
-        self.media[self.sub_name]['videos'].extend(videos)
     def check_for_more_images(self):
         global more
         self.media_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
-        self.old_media_count = self.media_count
+        if self.old_media_count == self.media_count:
+            print("No more posts")
+            more = False
+        else:
+            self.old_media_count = self.media_count
+        print("Media Count: {}".format(self.media_count))
+        print("Old Media Count: {}".format(self.old_media_count))
+
         while more:
             self.get_posts()
-            self.find_media2()
-            if self.old_media_count == self.media_count:
-                more = False
-            else:
-                self.old_media_count = self.media_count
-        # self.image_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
-        # self.image_count_old = self.image_count
-        # self.get_posts()
-        #
-        # while self.image_count_old != self.image_count:
-        #     self.find_media()
-        #     self.check_for_more_images()
+            self.find_media()
+
+
     def download_media(self):
         for sub in self.media:
             top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
@@ -259,6 +236,7 @@ def process():
     j4f.get_posts()
     j4f.find_media()
     j4f.get_videos()
+    # j4f.print()
     j4f.download_media()
 
 x = pathlib.Path('login.txt')
