@@ -1,10 +1,8 @@
 import mechanicalsoup
 import pandas as pd
 import getpass
-import login
 import pathlib
 import datetime
-import httpx
 # DO NOT EDIT ABOVE THIS LINE
 
 
@@ -50,7 +48,7 @@ class Browser:
     def login(self):
         try:
             _u = input("Email: ")
-            _p = input("Password: ")
+            _p = getpass.getpass("Password: ")
 
             self.browser.select_form()
             self.browser["Email"] = _u
@@ -165,12 +163,11 @@ class Browser:
         global more
         self.media_count = len(self.media[self.sub_name]['photos']) + len(self.media[self.sub_name]['videos']) + len(self.media[self.sub_name]['audios'])
         if self.old_media_count == self.media_count:
-            print("No more posts")
+
             more = False
         else:
             self.old_media_count = self.media_count
-        print("Media Count: {}".format(self.media_count))
-        print("Old Media Count: {}".format(self.old_media_count))
+
 
         while more:
             self.get_posts()
