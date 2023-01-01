@@ -184,12 +184,8 @@ class Browser:
                 sub_directory = pathlib.Path(top_directory / media_type)
                 sub_directory.mkdir(parents=True, exist_ok=True)
                 for media in self.media[sub][media_type]:
-                    try:
-                        if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
-                            file_name = media.split("/")[-1]
-                    except exception as e:
-                        print("There was an error with {}".format(media))
-                        print("The error was {}".format(e))
+                    if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
+                        file_name = media.split("/")[-1]
                     else:
                         file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".mp4"
                     file_path = pathlib.Path(sub_directory / file_name)
