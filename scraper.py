@@ -36,9 +36,14 @@ if debug:
         user_agent = login.ua
     except:
         raise Exception("Debug mode cannot be enabled at this time, please disable it.")
-if save_directory == "":
-    save_dir = '.'
+else:
+    if save_directory == "":
+        save_directory = "."
+        save_dir = save_directory
+
+
 save_location = pathlib.Path(save_dir)
+
 if user_agent == "":
     raise Exception("You have not defined a user agent!")
 
