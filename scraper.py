@@ -13,7 +13,7 @@ user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # File to save session to.
 session_file = "session.j4f"
 # Directory to create just for fans tree.
-save_dir = "./just4fans"
+save_dir = r"./just4fans"
 
 # DO NOT EDIT BELOW THIS LINE
 save_location = pathlib.Path(save_dir)
