@@ -227,7 +227,7 @@ class Browser:
                                     print("Downloading {} from {}".format(media.split("/")[-1],sub))
                                     with open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]), "wb") as f:
                                         f.write(s.get(final_url).content)
-                                    file_hash = hashlib.md5(open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]),"rb").read()).hexdigest()
+                                    # file_hash = hashlib.md5(open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]),"rb").read()).hexdigest()
 
                                     # cmd = "INSERT INTO {} VALUES ('{}','{}','{}')".format(sub, file_name, media_type,file_hash)
                                     # c.execute(cmd)
