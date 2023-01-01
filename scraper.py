@@ -36,7 +36,7 @@ if debug:
         user_agent = login.ua
     except:
         raise Exception("Debug mode cannot be enabled at this time, please disable it.")
-if save_dir == "":
+if save_directory == "":
     save_dir = '.'
 save_location = pathlib.Path(save_dir)
 class Browser:
