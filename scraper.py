@@ -4,20 +4,23 @@ import getpass
 import pathlib
 import datetime
 import webbrowser
+import requests
+import concurrent.futures
 # DO NOT EDIT ABOVE THIS LINE
 
 
 
 # User agent of your choice
-user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
+user_agent = ""
 # File to save session to.
 session_file = "session.j4f"
 # Directory to create just for fans tree.
-save_dir = "C:/Users/quent/Desktop/just4fans"
-
+save_directory = ""
+debug = False
 # DO NOT EDIT BELOW THIS LINE
-save_location = pathlib.Path(save_dir)
+
 more = True
+
 urls = {
     "login":"https://justfor.fans/login.php",
     "home_url":"https://justfor.fans/home",
@@ -26,6 +29,16 @@ urls = {
 # GET MORE POSTS ORDER USERID POSTERID STARTAT USERHASH4
 }
 # Create a browser object
+if debug:
+    try:
+        import login
+        save_dir = login.save_dir
+        user_agent = login.ua
+    except:
+        raise Exception("Debug mode cannot be enabled at this time, please disable it.")
+if save_dir == "":
+    save_dir = '.'
+save_location = pathlib.Path(save_dir)
 class Browser:
     def __init__(self,name):
         self.media = {}
@@ -49,8 +62,12 @@ class Browser:
 
     def login(self):
         try:
-            _u = input("Email: ")
-            _p = getpass.getpass("Password: ")
+            if debug:
+                _u = login._u
+                _p = login._p
+            else:
+                _u = input("Email: ")
+                _p = getpass.getpass("Password: ")
 
             self.browser.select_form()
             self.browser["Email"] = _u
@@ -175,28 +192,53 @@ class Browser:
             self.get_posts()
             self.find_media()
 
-
     def download_media(self):
-        for sub in self.media:
-            top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
-            top_directory.mkdir(parents=True, exist_ok=True)
-            for media_type in self.media[sub]:
-                sub_directory = pathlib.Path(top_directory / media_type)
-                sub_directory.mkdir(parents=True, exist_ok=True)
-                for media in self.media[sub][media_type]:
-                    if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
-                        file_name = media.split("/")[-1]
-                    else:
-                        file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".mp4"
-                    file_path = pathlib.Path(sub_directory / file_name)
-                    if not file_path.exists():
-                        print("Downloading {}".format(file_name))
-                        r = self.browser.open(media)
-                        with open(file_path, 'wb') as f:
-                            f.write(r.content)
+        with requests.session() as s:
+            s.headers.update(self.headers)
+            s.cookies.update(self.cookies)
+            for sub in self.media:
+                for media_type in self.media[sub]:
+                    if not pathlib.Path(save_location,sub,media_type).exists():
+                        pathlib.Path(save_location,sub,media_type).mkdir(parents=True)
+                    for media in self.media[sub][media_type]:
+                        final_url = s.get(media, stream=True).url
+                        if media_type == "videos":
+                            file_name = final_url.split("?")[0].split("/")[-1]
+                            if not pathlib.Path(save_location,sub,media_type,file_name).exists():
+                                print("Downloading {} from {}".format(file_name,sub))
+                                with open(pathlib.Path(save_location,sub,media_type,file_name), "wb") as f:
+                                    f.write(s.get(final_url).content)
+                        else:
+                            if not pathlib.Path(save_location,sub,media_type,"images").exists():
+                                print("Downloading {} from {}".format(media.split("/")[-1],sub))
+                                with open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]), "wb") as f:
+                                    f.write(s.get(final_url).content)
 
-                    else:
-                        print("Skipping {}".format(file_name))
+
+    # def download_media(self):
+    #     for sub in self.media:
+    #         top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
+    #         top_directory.mkdir(parents=True, exist_ok=True)
+    #         for media_type in self.media[sub]:
+    #             sub_directory = pathlib.Path(top_directory / media_type)
+    #             sub_directory.mkdir(parents=True, exist_ok=True)
+    #             for media in self.media[sub][media_type]:
+                    #
+                    #
+                    #
+                    # if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
+                    #     file_name = media.split("/")[-1]
+                    # else:
+                    #     file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".mp4"
+                    # file_path = pathlib.Path(sub_directory / file_name)
+                    # if not file_path.exists():
+                    #     print("Downloading {}".format(file_name))
+                    #     r = self.browser.open(media)
+                    #     with open(file_path, 'wb') as f:
+                    #         f.write(r.content)
+                    #
+                    # else:
+                    #     print("Skipping {}".format(file_name))
     def get_videos(self):
         vids = []
         vblocks = self.page.find_all("div", {"class": "videoBlock"})
@@ -217,6 +259,10 @@ class Browser:
                 print("  {}".format(media_type))
                 for media in self.media[sub][media_type]:
                     print("    {}".format(media))
+    def remove_duplicates(self):
+        for sub in self.media:
+            for media_type in self.media[sub]:
+                self.media[sub][media_type] = list(set(self.media[sub][media_type]))
 
 
 
@@ -235,6 +281,7 @@ def process():
     j4f.get_posts()
     j4f.find_media()
     j4f.get_videos()
+    j4f.remove_duplicates()
     # j4f.print()
     j4f.download_media()
 
@@ -243,8 +290,11 @@ def process():
 
 
 if __name__ == "__main__":
-    if webbrowser.open(urls['support']):
+    if debug:
         process()
     else:
-        print("Please support the devs by visiting {}".format(urls['support']))
-        process()
+        if webbrowser.open(urls['support']):
+            process()
+        else:
+            print("Please support the devs by visiting {}".format(urls['support']))
+            process()
