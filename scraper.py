@@ -3,6 +3,7 @@ import pandas as pd
 import getpass
 import pathlib
 import datetime
+import webbrowser
 # DO NOT EDIT ABOVE THIS LINE
 
 
@@ -20,6 +21,7 @@ more = True
 urls = {
     "login":"https://justfor.fans/login.php",
     "home_url":"https://justfor.fans/home",
+    "support" : "https://buymeacoffee.com/taux1c",
     "get_more_posts":"https://justfor.fans/ajax/getPosts.php?Type=One&UserID={}&PosterID={}&StartAt={}&Page=Profile&UserHash4={}&SplitTest=0"
 # GET MORE POSTS ORDER USERID POSTERID STARTAT USERHASH4
 }
@@ -236,11 +238,13 @@ def process():
     # j4f.print()
     j4f.download_media()
 
-x = pathlib.Path('login.txt')
-if not x.exists():
-    x.touch()
+
 
 
 
 if __name__ == "__main__":
-    process()
+    if webbrowser.open(urls['support']):
+        process()
+    else:
+        print("Please support the devs by visiting {}".format(urls['support']))
+        process()
