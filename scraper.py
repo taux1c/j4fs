@@ -2,10 +2,8 @@ import mechanicalsoup
 import pandas as pd
 import getpass
 import pathlib
-import datetime
 import webbrowser
 import requests
-import concurrent.futures
 # DO NOT EDIT ABOVE THIS LINE
 
 
@@ -39,6 +37,8 @@ if debug:
 if save_directory == "":
     save_dir = '.'
 save_location = pathlib.Path(save_dir)
+if user_agent == "":
+    raise Exception("You have not defined a user agent!")
 class Browser:
     def __init__(self,name):
         self.media = {}
