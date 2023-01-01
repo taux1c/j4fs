@@ -16,7 +16,7 @@ user_agent = ""
 session_file = "session.j4f"
 # Directory to create just for fans tree.
 save_directory = ""
-debug = True
+debug = False
 # DO NOT EDIT BELOW THIS LINE
 
 more = True
