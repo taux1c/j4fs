@@ -13,7 +13,7 @@ user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # File to save session to.
 session_file = "session.j4f"
 # Directory to create just for fans tree.
-save_dir = r"./just4fans"
+save_dir = "./just4fans"
 
 # DO NOT EDIT BELOW THIS LINE
 save_location = pathlib.Path(save_dir)
@@ -184,8 +184,11 @@ class Browser:
                 sub_directory = pathlib.Path(top_directory / media_type)
                 sub_directory.mkdir(parents=True, exist_ok=True)
                 for media in self.media[sub][media_type]:
-                    if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
-                        file_name = media.split("/")[-1]
+                    try:
+                        if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
+                            file_name = media.split("/")[-1]
+                    except:
+                        file_name = file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".jpg"
                     else:
                         file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".mp4"
                     file_path = pathlib.Path(sub_directory / file_name)
