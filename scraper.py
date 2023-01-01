@@ -4,6 +4,8 @@ import getpass
 import pathlib
 import webbrowser
 import requests
+import sqlite3
+import hashlib
 # DO NOT EDIT ABOVE THIS LINE
 
 
@@ -14,7 +16,7 @@ user_agent = ""
 session_file = "session.j4f"
 # Directory to create just for fans tree.
 save_directory = ""
-debug = False
+debug = True
 # DO NOT EDIT BELOW THIS LINE
 
 more = True
@@ -39,6 +41,8 @@ if save_directory == "":
 save_location = pathlib.Path(save_dir)
 if user_agent == "":
     raise Exception("You have not defined a user agent!")
+
+
 class Browser:
     def __init__(self,name):
         self.media = {}
@@ -197,6 +201,9 @@ class Browser:
             s.headers.update(self.headers)
             s.cookies.update(self.cookies)
             for sub in self.media:
+                # with sqlite3.connect("j4f.db") as conn:
+                #     c = conn.cursor()
+                #     c.execute("CREATE TABLE IF NOT EXISTS {} (file_name, file_type, file_hash)".format(sub))
                 for media_type in self.media[sub]:
                     if not pathlib.Path(save_location,sub,media_type).exists():
                         pathlib.Path(save_location,sub,media_type).mkdir(parents=True)
@@ -204,41 +211,27 @@ class Browser:
                         final_url = s.get(media, stream=True).url
                         if media_type == "videos":
                             file_name = final_url.split("?")[0].split("/")[-1]
-                            if not pathlib.Path(save_location,sub,media_type,file_name).exists():
-                                print("Downloading {} from {}".format(file_name,sub))
-                                with open(pathlib.Path(save_location,sub,media_type,file_name), "wb") as f:
-                                    f.write(s.get(final_url).content)
+                            if not pathlib.Path(save_location,sub,media_type,file_name).exists() and file_name not in c.execute("SELECT file_name FROM {} WHERE file_type = 'video'".format(sub)).fetchall():
+                                with sqlite3.connect("j4f.db") as conn:
+                                    c = conn.cursor()
+                                    print("Downloading {} from {}".format(file_name,sub))
+                                    with open(pathlib.Path(save_location,sub,media_type,file_name), "wb") as f:
+                                        f.write(s.get(final_url).content)
+                                    file_hash = hashlib.md5(open(pathlib.Path(save_location,sub,media_type,file_name), "rb").read()).hexdigest()
+                                    # cmd = "INSERT INTO {} VALUES ('{}','{}','{}')".format(sub,file_name,media_type,file_hash)
+                                    # c.execute(cmd)
                         else:
                             if not pathlib.Path(save_location,sub,media_type,"images").exists():
-                                print("Downloading {} from {}".format(media.split("/")[-1],sub))
-                                with open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]), "wb") as f:
-                                    f.write(s.get(final_url).content)
+                                with sqlite3.connect("justforfans.db") as conn:
+                                    c = conn.cursor()
+                                    print("Downloading {} from {}".format(media.split("/")[-1],sub))
+                                    with open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]), "wb") as f:
+                                        f.write(s.get(final_url).content)
+                                    file_hash = hashlib.md5(open(pathlib.Path(save_location,sub,media_type,media.split("/")[-1]),"rb").read()).hexdigest()
 
+                                    # cmd = "INSERT INTO {} VALUES ('{}','{}','{}')".format(sub, file_name, media_type,file_hash)
+                                    # c.execute(cmd)
 
-    # def download_media(self):
-    #     for sub in self.media:
-    #         top_directory = pathlib.Path("{}/{}".format(save_dir,sub))
-    #         top_directory.mkdir(parents=True, exist_ok=True)
-    #         for media_type in self.media[sub]:
-    #             sub_directory = pathlib.Path(top_directory / media_type)
-    #             sub_directory.mkdir(parents=True, exist_ok=True)
-    #             for media in self.media[sub][media_type]:
-                    #
-                    #
-                    #
-                    # if media.split("/")[-1].split('.')[-1] in ['jpg','png','gif','jpeg']:
-                    #     file_name = media.split("/")[-1]
-                    # else:
-                    #     file_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".mp4"
-                    # file_path = pathlib.Path(sub_directory / file_name)
-                    # if not file_path.exists():
-                    #     print("Downloading {}".format(file_name))
-                    #     r = self.browser.open(media)
-                    #     with open(file_path, 'wb') as f:
-                    #         f.write(r.content)
-                    #
-                    # else:
-                    #     print("Skipping {}".format(file_name))
     def get_videos(self):
         vids = []
         vblocks = self.page.find_all("div", {"class": "videoBlock"})
@@ -284,7 +277,7 @@ def process():
     j4f.remove_duplicates()
     # j4f.print()
     j4f.download_media()
-
+    con.close()
 
 
 
