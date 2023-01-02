@@ -15,7 +15,7 @@ user_agent = ""
 # File to save session to.
 session_file = "session.j4f"
 # Directory to create just for fans tree.
-save_directory = ""
+save_directory = r""
 debug = False
 # DO NOT EDIT BELOW THIS LINE
 
@@ -28,7 +28,10 @@ urls = {
     "get_more_posts":"https://justfor.fans/ajax/getPosts.php?Type=One&UserID={}&PosterID={}&StartAt={}&Page=Profile&UserHash4={}&SplitTest=0"
 # GET MORE POSTS ORDER USERID POSTERID STARTAT USERHASH4
 }
-# Create a browser object
+
+if "\\" in save_directory:
+    save_directory = save_directory.replace("\\", "/")
+
 if debug:
     try:
         import login
@@ -36,10 +39,12 @@ if debug:
         user_agent = login.ua
     except:
         raise Exception("Debug mode cannot be enabled at this time, please disable it.")
-else:
-    if save_directory == "":
-        save_directory = "."
-        save_dir = save_directory
+if user_agent == "":
+    raise Exception("Please set a user agent in the script.")
+if save_directory == "":
+    raise Exception("Please set a save directory in the script.")
+
+
 
 
 save_location = pathlib.Path(save_dir)
@@ -282,7 +287,7 @@ def process():
     j4f.remove_duplicates()
     # j4f.print()
     j4f.download_media()
-    con.close()
+    # con.close()
 
 
 
